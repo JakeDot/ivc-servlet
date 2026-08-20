@@ -1,1 +1,2 @@
-gen-lang-client-0341647930.firebaseapp.com
+# Server deployment
+this service is available under ivc+https://s.ivc.cx/&services/∆modes
