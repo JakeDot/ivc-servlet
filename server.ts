@@ -8,6 +8,7 @@ app.use(express.json());
 // Ephemeral memory
 const messages: any[] = [];
 const clients: Set<express.Response> = new Set();
+const modelDb = new Map<string, any>();
 
 app.get('/api/events', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -23,6 +24,25 @@ app.get('/api/events', (req, res) => {
   req.on('close', () => {
     clients.delete(res);
   });
+});
+
+app.put(/^\/ivc:\/\/([a-zA-Z0-9.-]+)\+([a-zA-Z]+)\/\$model\.([a-zA-Z0-9.-]+)\/?$/, (req, res) => {
+  const host = req.params[0];
+  const modes = req.params[1];
+  const tld = req.params[2];
+
+  const uri = `ivc://${host}+${modes}/$model.${tld}/`;
+  const payload = req.body;
+
+  if (!modelDb.has(uri)) {
+    modelDb.set(uri, payload);
+    res.status(201).json({ status: 'created', uri, data: payload });
+  } else {
+    const existing = modelDb.get(uri);
+    const updated = { ...existing, ...payload };
+    modelDb.set(uri, updated);
+    res.json({ status: 'updated', uri, data: updated });
+  }
 });
 
 export const broadcast = (data: any) => {
