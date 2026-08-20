@@ -46,6 +46,7 @@ function extractFractionAndDegree(pathStr?: string): {
 
 /**
  * Parses complex connection strings such as:
+ * - fb://user:pass@facebook.net
  * - https://+15550199283@whatsapp.net/7°180
  * - user@email.host/service.social/3°90
  * - $me/3°120 or $me/8°270
@@ -80,6 +81,34 @@ export function parseConnectionString(raw: string): ParsedConnectionString {
       explanation: `Self addressable entity ($me variable pointer)${
         fractionalSubobject ? ` with subobject ${fractionalSubobject}` : ''
       }${degreeModifier !== undefined ? ` at ${degreeModifier}° orientation` : ''}`,
+    };
+  }
+
+  // Handle social network login URIs like fb://user:pass@facebook.net or ig://user:pass@instagram.net
+  const socialLoginRegex = /^([a-zA-Z0-9+.-]+):\/\/(?:([^:@]+)(?::([^@]+))?@)?([^/?:#]+)(?::(\d+))?([^?#]*)?(?:\?([^#]*))?$/;
+  const socialMatch = trimmed.match(socialLoginRegex);
+  if (socialMatch && ['fb', 'facebook', 'ig', 'instagram', 'tg', 'telegram', 'tw', 'twitter', 'social'].includes(socialMatch[1].toLowerCase())) {
+    const scheme = socialMatch[1];
+    const user = socialMatch[2] ? decodeURIComponent(socialMatch[2]) : undefined;
+    const password = socialMatch[3] ? decodeURIComponent(socialMatch[3]) : undefined;
+    const host = socialMatch[4];
+    const port = socialMatch[5];
+    const rawPath = socialMatch[6];
+    const { cleanPath, fractionalSubobject, degreeModifier } = extractFractionAndDegree(rawPath);
+
+    return {
+      raw: trimmed,
+      scheme,
+      user,
+      password,
+      host,
+      port,
+      path: cleanPath || undefined,
+      fractionalSubobject,
+      degreeModifier,
+      isSelfVariable: false,
+      isValid: true,
+      explanation: `Social Network Service login endpoint for ${user || 'user'} on ${host}`,
     };
   }
 
@@ -122,6 +151,7 @@ export function parseConnectionString(raw: string): ParsedConnectionString {
       raw: trimmed,
       scheme: url.protocol.replace(':', ''),
       user: url.username ? decodeURIComponent(url.username) : undefined,
+      password: url.password ? decodeURIComponent(url.password) : undefined,
       host: url.hostname,
       port: url.port || undefined,
       path: cleanPath !== '/' ? cleanPath : undefined,
@@ -136,16 +166,17 @@ export function parseConnectionString(raw: string): ParsedConnectionString {
     };
   } catch (_e) {
     // Custom scheme parsing fallback (e.g. ivc://IVC.cx+Sn/$opers/8°270)
-    const customUriRegex = /^([a-zA-Z0-9+.-]+):\/\/(?:([^@]+)@)?([^/?:#]+)(?::(\d+))?([^?#]*)?(?:\?([^#]*))?$/;
+    const customUriRegex = /^([a-zA-Z0-9+.-]+):\/\/(?:([^:@]+)(?::([^@]+))?@)?([^/?:#]+)(?::(\d+))?([^?#]*)?(?:\?([^#]*))?$/;
     const match = trimmed.match(customUriRegex);
 
     if (match) {
       const scheme = match[1];
       const user = match[2] ? decodeURIComponent(match[2]) : undefined;
-      const host = match[3];
-      const port = match[4];
-      const rawPath = match[5];
-      const queryStr = match[6];
+      const password = match[3] ? decodeURIComponent(match[3]) : undefined;
+      const host = match[4];
+      const port = match[5];
+      const rawPath = match[6];
+      const queryStr = match[7];
 
       const { cleanPath, fractionalSubobject, degreeModifier } = extractFractionAndDegree(rawPath);
 
@@ -161,6 +192,7 @@ export function parseConnectionString(raw: string): ParsedConnectionString {
         raw: trimmed,
         scheme,
         user,
+        password,
         host,
         port,
         path: cleanPath || undefined,
@@ -169,7 +201,7 @@ export function parseConnectionString(raw: string): ParsedConnectionString {
         query: Object.keys(query).length > 0 ? query : undefined,
         isSelfVariable: false,
         isValid: true,
-        explanation: `Custom IVC URI protocol '${scheme}' bound to ${host}${
+        explanation: `Custom URI protocol '${scheme}' bound to ${host}${
           fractionalSubobject ? ` subobject ${fractionalSubobject}` : ''
         }${degreeModifier !== undefined ? ` °${degreeModifier}` : ''}`,
       };
@@ -192,6 +224,7 @@ export function parseConnectionString(raw: string): ParsedConnectionString {
 export function detectCategory(raw: string): ServiceCategory {
   const trimmed = raw.trim();
 
+  if (/^(fb|ig|tg|tw|facebook|instagram|telegram|twitter):\/\//i.test(trimmed)) return 'social_network';
   if (trimmed.includes('@whatsapp.net')) return 'whatsapp';
   if (trimmed.startsWith('$me')) return 'self';
   if (trimmed.startsWith('grpc://')) return 'grpc';
@@ -203,6 +236,19 @@ export function detectCategory(raw: string): ServiceCategory {
 }
 
 export const DEFAULT_CONNECTION_STRINGS: ConnectionStringItem[] = [
+  {
+    id: 'conn-social-fb-1',
+    rawString: 'fb://user:pass@facebook.net',
+    label: 'Facebook Service Login (fb://user:pass@facebook.net)',
+    category: 'social_network',
+    status: 'connected',
+    description: 'Standard Facebook network service login credential string.',
+    parsed: parseConnectionString('fb://user:pass@facebook.net'),
+    latencyMs: 24,
+    lastTested: Date.now() - 150000,
+    createdAt: Date.now() - 86400000,
+    isDefault: true,
+  },
   {
     id: 'conn-default-1',
     rawString: 'https://+15550199283@whatsapp.net/7°180',

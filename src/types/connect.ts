@@ -1,6 +1,7 @@
 export type ServiceCategory =
   | 'whatsapp'
   | 'social_email'
+  | 'social_network'
   | 'self'
   | 'ivc_protocol'
   | 'grpc'
@@ -12,6 +13,7 @@ export type ConnectionStatus = 'active' | 'testing' | 'connected' | 'error' | 'u
 export interface ParsedConnectionString {
   scheme?: string;
   user?: string;
+  password?: string;
   host?: string;
   port?: string;
   path?: string;

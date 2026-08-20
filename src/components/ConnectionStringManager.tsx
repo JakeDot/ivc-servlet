@@ -36,6 +36,10 @@ import {
   Power,
   Compass,
   PieChart,
+  Share2,
+  Eye,
+  EyeOff,
+  KeyRound,
 } from 'lucide-react';
 
 interface ConnectionStringManagerProps {
@@ -51,13 +55,14 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
   const [expandedId, setExpandedId] = useState<string | null>(DEFAULT_CONNECTION_STRINGS[0]?.id || null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [connectionNotice, setConnectionNotice] = useState<string | null>(null);
+  const [showPasswordMap, setShowPasswordMap] = useState<Record<string, boolean>>({});
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ConnectionStringItem | null>(null);
-  const [formRawString, setFormRawString] = useState('https://+15550199283@whatsapp.net/7°180');
+  const [formRawString, setFormRawString] = useState('fb://user:pass@facebook.net');
   const [formLabel, setFormLabel] = useState('');
-  const [formCategory, setFormCategory] = useState<ServiceCategory>('whatsapp');
+  const [formCategory, setFormCategory] = useState<ServiceCategory>('social_network');
   const [formDescription, setFormDescription] = useState('');
 
   // Live modal parsed output
@@ -65,6 +70,24 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
 
   // Preset templates
   const presets = [
+    {
+      label: 'Facebook Service Login (fb://user:pass@facebook.net)',
+      value: 'fb://user:pass@facebook.net',
+      cat: 'social_network' as ServiceCategory,
+      desc: 'Standard Facebook network service login credential URI',
+    },
+    {
+      label: 'Instagram Service Login (ig://user:pass@instagram.net)',
+      value: 'ig://user:pass@instagram.net',
+      cat: 'social_network' as ServiceCategory,
+      desc: 'Instagram social network service login URI',
+    },
+    {
+      label: 'Telegram Bot Token Login (tg://bot:token@telegram.org)',
+      value: 'tg://bot:token@telegram.org',
+      cat: 'social_network' as ServiceCategory,
+      desc: 'Telegram bot token service login URI',
+    },
     {
       label: 'WhatsApp Fractional Node (https://+number@whatsapp.net/7°180)',
       value: 'https://+15550199283@whatsapp.net/7°180',
@@ -83,24 +106,6 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
       cat: 'self' as ServiceCategory,
       desc: 'Active Operator Self Identity Pointer at /3 subobject and 120°',
     },
-    {
-      label: 'Self Identity Fractional Subobject ($me/8°270)',
-      value: '$me/8°270',
-      cat: 'self' as ServiceCategory,
-      desc: 'Active Operator Self Identity Pointer at /8 subobject and 270°',
-    },
-    {
-      label: 'IVC Protocol Subobject (ivc://.../9°360)',
-      value: 'ivc://IVC.cx+Sn/$opers/9°360',
-      cat: 'ivc_protocol' as ServiceCategory,
-      desc: 'IVC Operations Channel Stream at /9 subobject and 360° phase',
-    },
-    {
-      label: 'gRPC Subobject Stream (grpc://.../7°45)',
-      value: 'grpc://mesh.ivc.internal:9090/v1/stream/7°45',
-      cat: 'grpc' as ServiceCategory,
-      desc: 'Internal Microservice Mesh gRPC Stream at /7 subobject and 45°',
-    },
   ];
 
   // Filter items
@@ -116,6 +121,10 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
       return matchesSearch && matchesCat;
     });
   }, [items, searchQuery, selectedCategory]);
+
+  const togglePasswordVisibility = (id: string) => {
+    setShowPasswordMap((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Test Connectivity Simulator
   const handleTestConnection = (id: string) => {
@@ -158,7 +167,7 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
     setItems(DEFAULT_CONNECTION_STRINGS);
     setSearchQuery('');
     setSelectedCategory('all');
-    setConnectionNotice('Restored default fractional connection strings.');
+    setConnectionNotice('Restored default connection strings & social logins.');
     setTimeout(() => setConnectionNotice(null), 3500);
   };
 
@@ -201,10 +210,10 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
   // Open Modal for Add
   const handleOpenAddModal = () => {
     setEditingItem(null);
-    setFormRawString('https://+15550199283@whatsapp.net/7°180');
-    setFormLabel('WhatsApp Subobject /7°180');
-    setFormCategory('whatsapp');
-    setFormDescription('WhatsApp direct connection string endpoint with fractional subobject /7 at 180°');
+    setFormRawString('fb://user:pass@facebook.net');
+    setFormLabel('Facebook Network Login');
+    setFormCategory('social_network');
+    setFormDescription('Standard Facebook service login credential URI');
     setIsModalOpen(true);
   };
 
@@ -288,6 +297,13 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
 
   const getCategoryBadge = (cat: ServiceCategory) => {
     switch (cat) {
+      case 'social_network':
+        return (
+          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-950 text-blue-300 border border-blue-800">
+            <Share2 className="w-3 h-3 text-blue-400" />
+            <span>Social Login</span>
+          </span>
+        );
       case 'whatsapp':
         return (
           <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-950 text-emerald-300 border border-emerald-800">
@@ -297,36 +313,36 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
         );
       case 'social_email':
         return (
-          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-950 text-blue-300 border border-blue-800">
-            <Globe className="w-3 h-3 text-blue-400" />
+          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-950 text-purple-300 border border-purple-800">
+            <Globe className="w-3 h-3 text-purple-400" />
             <span>Social Email</span>
           </span>
         );
       case 'self':
         return (
-          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-950 text-purple-300 border border-purple-800">
-            <UserCheck className="w-3 h-3 text-purple-400" />
+          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-950 text-indigo-300 border border-indigo-800">
+            <UserCheck className="w-3 h-3 text-indigo-400" />
             <span>$me Variable</span>
           </span>
         );
       case 'ivc_protocol':
         return (
-          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-950 text-indigo-300 border border-indigo-800">
-            <Zap className="w-3 h-3 text-indigo-400" />
+          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-950 text-amber-300 border border-amber-800">
+            <Zap className="w-3 h-3 text-amber-400" />
             <span>IVC Protocol</span>
           </span>
         );
       case 'grpc':
         return (
-          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-950 text-amber-300 border border-amber-800">
-            <Server className="w-3 h-3 text-amber-400" />
+          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-950 text-cyan-300 border border-cyan-800">
+            <Server className="w-3 h-3 text-cyan-400" />
             <span>gRPC Mesh</span>
           </span>
         );
       case 'websocket':
         return (
-          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-950 text-cyan-300 border border-cyan-800">
-            <Terminal className="w-3 h-3 text-cyan-400" />
+          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
+            <Terminal className="w-3 h-3" />
             <span>WebSocket</span>
           </span>
         );
@@ -401,7 +417,7 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Manage URI schemes, fractional subobjects (<span className="text-pink-400 font-mono">/3, /7, /8, /9</span>), degree modifiers (<span className="text-cyan-300 font-mono">°0-360</span>), and social addresses (<span className="text-emerald-400 font-mono">https://+number@whatsapp.net</span>, <span className="text-purple-400 font-mono">$me/3°120</span>).
+                  Manage URI schemes, social logins (<span className="text-blue-400 font-mono">fb://user:pass@facebook.net</span>), subobjects (<span className="text-pink-400 font-mono">/3, /7, /8, /9</span>), degree modifiers (<span className="text-cyan-300 font-mono">°0-360</span>), and social addresses.
                 </p>
               </div>
             </div>
@@ -465,7 +481,7 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
             <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search connection strings, degree modifiers °180, or /3 subobjects..."
+              placeholder="Search connection strings, fb://user:pass, or /3 subobjects..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
@@ -488,6 +504,7 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
             {(
               [
                 { id: 'all', label: 'All Services' },
+                { id: 'social_network', label: 'Social Login' },
                 { id: 'whatsapp', label: 'WhatsApp' },
                 { id: 'social_email', label: 'Social Email' },
                 { id: 'self', label: '$me Self' },
@@ -528,7 +545,7 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
               </h3>
               <p className="text-xs text-slate-400">
                 {items.length === 0
-                  ? 'All connection strings have been disconnected (<empty>). You can disconnect & reconnect directly to fractional alias $me/3°120 or restore default fractional services.'
+                  ? 'All connection strings have been disconnected (<empty>). You can disconnect & reconnect directly to fractional alias $me/3°120 or restore default services.'
                   : `No connection strings match your filter query "${searchQuery}".`}
               </p>
             </div>
@@ -560,11 +577,11 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
             </div>
 
             <div className="mt-6 pt-6 border-t border-slate-800/80 text-[11px] text-slate-500 font-mono text-left bg-slate-950 p-3 rounded-lg border border-slate-800/50">
-              <span className="text-slate-400 font-semibold block mb-1">Supported Subobjects & Degree Modifiers:</span>
+              <span className="text-slate-400 font-semibold block mb-1">Supported Connection String Formats:</span>
               <ul className="space-y-0.5 list-disc list-inside text-slate-400">
+                <li><code className="text-blue-400">fb://user:pass@facebook.net</code> (Social Service Login)</li>
                 <li><code className="text-emerald-400">https://+number@whatsapp.net/7°180</code></li>
-                <li><code className="text-blue-400">user@email.host/service.social/3°90</code></li>
-                <li><code className="text-purple-400">$me/3°120</code> or <code className="text-purple-400">$me/8°270</code></li>
+                <li><code className="text-purple-400">$me/3°120</code></li>
                 <li><code className="text-indigo-400">ivc://IVC.cx+Sn/$opers/9°360</code></li>
               </ul>
             </div>
@@ -590,6 +607,15 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
           <div className="grid grid-cols-1 gap-4">
             {filteredItems.map((item) => {
               const isExpanded = expandedId === item.id;
+              const isPasswordVisible = !!showPasswordMap[item.id];
+              const hasPassword = !!item.parsed.password;
+
+              // Render raw string with password masked if present and toggle is off
+              let displayRawString = item.rawString;
+              if (hasPassword && !isPasswordVisible && item.parsed.password) {
+                displayRawString = item.rawString.replace(`:${item.parsed.password}@`, ':••••••••@');
+              }
+
               return (
                 <div
                   key={item.id}
@@ -605,6 +631,12 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
                       <div className="flex items-center space-x-2.5 flex-wrap gap-y-1">
                         {getCategoryBadge(item.category)}
                         {getStatusBadge(item.status)}
+                        {hasPassword && (
+                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-mono bg-blue-950 text-blue-300 border border-blue-800/80">
+                            <KeyRound className="w-3 h-3 text-blue-400" />
+                            <span>Service Credential</span>
+                          </span>
+                        )}
                         {item.parsed.fractionalSubobject && (
                           <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-mono bg-pink-950 text-pink-300 border border-pink-800/80">
                             <PieChart className="w-3 h-3 text-pink-400" />
@@ -620,11 +652,21 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
                         <h3 className="text-sm font-bold text-slate-100 truncate">{item.label}</h3>
                       </div>
 
-                      {/* Raw Connection String Pill */}
-                      <div className="flex items-center space-x-2 bg-slate-950 border border-slate-800 rounded-lg p-2.5 max-w-full overflow-x-auto">
+                      {/* Raw Connection String Pill with Password Masking Toggle */}
+                      <div className="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-lg p-2.5 max-w-full overflow-x-auto gap-2">
                         <code className="text-xs font-mono text-indigo-300 font-semibold select-all whitespace-nowrap">
-                          {item.rawString}
+                          {displayRawString}
                         </code>
+                        {hasPassword && (
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility(item.id)}
+                            className="text-slate-400 hover:text-slate-200 p-1 cursor-pointer shrink-0"
+                            title={isPasswordVisible ? 'Hide password' : 'Show password'}
+                          >
+                            {isPasswordVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        )}
                       </div>
                       <p className="text-xs text-slate-400">{item.description}</p>
                     </div>
@@ -721,7 +763,7 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
 
                         <div className="bg-slate-900 border border-slate-800 p-2.5 rounded-lg">
                           <span className="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
-                            User / Authority
+                            User
                           </span>
                           <code className="text-emerald-400 font-mono font-semibold truncate block">
                             {item.parsed.user || '<none>'}
@@ -730,20 +772,24 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
 
                         <div className="bg-slate-900 border border-slate-800 p-2.5 rounded-lg">
                           <span className="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
-                            Host / Domain
+                            Password / Key
                           </span>
-                          <code className="text-blue-400 font-mono font-semibold truncate block">
-                            {item.parsed.host || '<none>'}
-                            {item.parsed.port ? `:${item.parsed.port}` : ''}
+                          <code className="text-blue-300 font-mono font-semibold truncate block">
+                            {item.parsed.password
+                              ? isPasswordVisible
+                                ? item.parsed.password
+                                : '••••••••'
+                              : '<none>'}
                           </code>
                         </div>
 
                         <div className="bg-slate-900 border border-slate-800 p-2.5 rounded-lg">
                           <span className="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
-                            Target Path
+                            Host Network
                           </span>
-                          <code className="text-amber-400 font-mono font-semibold truncate block">
-                            {item.parsed.path || '/'}
+                          <code className="text-blue-400 font-mono font-semibold truncate block">
+                            {item.parsed.host || '<none>'}
+                            {item.parsed.port ? `:${item.parsed.port}` : ''}
                           </code>
                         </div>
 
@@ -831,12 +877,12 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
 
               <div>
                 <label className="block text-slate-400 mb-1 font-medium">
-                  Connection String Address / URI (Supports /3, /7, /8, /9 subobjects & °0-360 modifiers)
+                  Connection String Address / URI (e.g. fb://user:pass@facebook.net or https://+number@whatsapp.net)
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="https://+15550199283@whatsapp.net/7°180 or user@email.host/service.social/3°90 or $me/3°120"
+                  placeholder="fb://user:pass@facebook.net or ig://user:pass@instagram.net or $me/3°120"
                   value={formRawString}
                   onChange={(e) => setFormRawString(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-100 font-mono focus:outline-none focus:border-indigo-500 text-xs"
@@ -848,20 +894,22 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
                 <span className="text-[10px] font-bold uppercase text-indigo-400 block">
                   Live Connection String Parser Inspection:
                 </span>
-                <div className="grid grid-cols-3 gap-2 text-[11px] font-mono">
+                <div className="grid grid-cols-4 gap-2 text-[11px] font-mono">
                   <div>
                     <span className="text-slate-500">Scheme:</span>{' '}
                     <span className="text-indigo-300">{liveParsed.scheme || '<none>'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Subobject:</span>{' '}
-                    <span className="text-pink-300">{liveParsed.fractionalSubobject || '<full>'}</span>
+                    <span className="text-slate-500">User:</span>{' '}
+                    <span className="text-emerald-300">{liveParsed.user || '<none>'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Degree Mod:</span>{' '}
-                    <span className="text-cyan-300">
-                      {liveParsed.degreeModifier !== undefined ? `°${liveParsed.degreeModifier}` : '<none>'}
-                    </span>
+                    <span className="text-slate-500">Pass:</span>{' '}
+                    <span className="text-blue-300">{liveParsed.password ? '••••••••' : '<none>'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Host:</span>{' '}
+                    <span className="text-amber-300">{liveParsed.host || '<none>'}</span>
                   </div>
                 </div>
               </div>
@@ -872,7 +920,7 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
                   <input
                     type="text"
                     required
-                    placeholder="e.g. WhatsApp Ingress Subobject /7°180"
+                    placeholder="e.g. Facebook Service Login"
                     value={formLabel}
                     onChange={(e) => setFormLabel(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
@@ -886,6 +934,7 @@ export const ConnectionStringManager: React.FC<ConnectionStringManagerProps> = (
                     onChange={(e) => setFormCategory(e.target.value as ServiceCategory)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
                   >
+                    <option value="social_network">Social Login (fb://user:pass@facebook.net)</option>
                     <option value="whatsapp">WhatsApp (https://+number@whatsapp.net/7°180)</option>
                     <option value="social_email">Social Email (user@email.host/service.social/3°90)</option>
                     <option value="self">Self Variable ($me/3°120)</option>
