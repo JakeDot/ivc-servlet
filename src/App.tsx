@@ -21,6 +21,7 @@ import { DeltaStatsView } from './components/DeltaStatsView';
 import { FlowTraceView } from './components/FlowTraceView';
 import { DeltaGalleryView } from './components/DeltaGalleryView';
 import { ChatView } from './components/ChatView';
+import { ConnectionStringManager } from './components/ConnectionStringManager';
 import {
   Radio,
   Play,
@@ -32,9 +33,16 @@ import {
   X,
   SlidersHorizontal,
   Share2,
+  Link2,
+  LayoutDashboard,
 } from 'lucide-react';
 
 export default function App() {
+  // Routing state based on window.location.pathname
+  const [currentPath, setCurrentPath] = useState<string>(
+    window.location.pathname === '/connect' ? '/connect' : '/'
+  );
+
   const [objects, setObjects] = useState<AddressableObject[]>(INITIAL_ADDRESSABLE_OBJECTS);
   const [selectedObjectId, setSelectedObjectId] = useState<string>(INITIAL_ADDRESSABLE_OBJECTS[0].id);
   const [isAutoSimulating, setIsAutoSimulating] = useState<boolean>(false);
@@ -59,6 +67,20 @@ export default function App() {
   const [newServletClass, setNewServletClass] = useState('com.enterprise.ivc.servlets.WhatsAppBridgeServlet');
   const [newEndpointPath, setNewEndpointPath] = useState('/ivc/v1/social/whatsapp');
   const [newProtocol, setNewProtocol] = useState<IVCProtocol>('IVC-REST');
+
+  // Handle URL history popstate changes
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname === '/connect' ? '/connect' : '/');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateTo = (path: string) => {
+    window.history.pushState({}, '', path);
+    setCurrentPath(path);
+  };
 
   const selectedObject = useMemo(
     () => objects.find((o) => o.id === selectedObjectId) || objects[0],
@@ -162,7 +184,6 @@ export default function App() {
 
     setChatMessages((prev) => [...prev, newMsg]);
 
-    // If message contains media attachments, also append them to the selected object's ∆gallery
     if (attachments && attachments.length > 0) {
       attachments.forEach((att) => handleAddMediaToGallery(att));
     }
@@ -271,140 +292,182 @@ export default function App() {
           </div>
 
           <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setIsAutoSimulating(!isAutoSimulating)}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
-                isAutoSimulating
-                  ? 'bg-rose-950/80 border-rose-700 text-rose-300 hover:bg-rose-900'
-                  : 'bg-emerald-950/80 border-emerald-700 text-emerald-300 hover:bg-emerald-900'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{isAutoSimulating ? 'Stop Traffic Sim' : 'Simulate Traffic'}</span>
-            </button>
+            {/* View Switcher Route Buttons */}
+            <div className="bg-slate-950 border border-slate-800 p-1 rounded-xl flex items-center space-x-1">
+              <button
+                onClick={() => navigateTo('/')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  currentPath === '/'
+                    ? 'bg-indigo-600 text-white shadow'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span>Control Plane</span>
+              </button>
+
+              <button
+                onClick={() => navigateTo('/connect')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  currentPath === '/connect'
+                    ? 'bg-indigo-600 text-white shadow'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                <span>/connect Manager</span>
+              </button>
+            </div>
+
+            {currentPath === '/' && (
+              <button
+                onClick={() => setIsAutoSimulating(!isAutoSimulating)}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
+                  isAutoSimulating
+                    ? 'bg-rose-950/80 border-rose-700 text-rose-300 hover:bg-rose-900'
+                    : 'bg-emerald-950/80 border-emerald-700 text-emerald-300 hover:bg-emerald-900'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{isAutoSimulating ? 'Stop Traffic Sim' : 'Simulate Traffic'}</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Addressable Object Selector Grid */}
-        <ObjectSelector
-          objects={objects}
-          selectedObjectId={selectedObjectId}
-          onSelectObject={setSelectedObjectId}
-          onAddNewObject={() => setShowAddModal(true)}
-        />
-
-        {/* Selected Object Active Controls & Summary Header */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <div className="flex items-center space-x-2 mb-1">
-              <span className="text-xs font-mono text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800">
-                {selectedObject.protocol}
-              </span>
-              <span className="text-xs font-mono text-cyan-300 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800 capitalize">
-                {selectedObject.kind.replace('_', ' ')}
-              </span>
-              {selectedObject.connectorAddress && (
-                <span className="text-xs font-mono text-purple-300 bg-purple-950 px-2 py-0.5 rounded border border-purple-800 flex items-center space-x-1">
-                  <Share2 className="w-3 h-3 text-purple-400" />
-                  <span>{selectedObject.connectorAddress}</span>
-                </span>
-              )}
-              <h2 className="text-xl font-bold text-slate-100">{selectedObject.name}</h2>
-              <span className="text-xs text-slate-500 font-mono">({selectedObject.id})</span>
-            </div>
-            <p className="text-xs text-slate-400 max-w-2xl">
-              Servlet Class: <span className="text-slate-300 font-mono">{selectedObject.servletClass}</span> | Endpoint Path:{' '}
-              <span className="text-slate-300 font-mono">{selectedObject.endpointPath}</span>
-            </p>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => handleTriggerIVCCall(selectedObject)}
-              className="flex items-center space-x-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow transition-all cursor-pointer"
-            >
-              <Play className="w-3.5 h-3.5 fill-current" />
-              <span>Fire IVC Call</span>
-            </button>
-            <button
-              onClick={() => handleBatchIVCLoad(5)}
-              className="flex items-center space-x-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>Burst (5x)</span>
-            </button>
-          </div>
-        </div>
-
-        {/* View Switcher Tabs */}
-        <div className="flex space-x-3 border-b border-slate-800 pb-3">
-          <button
-            onClick={() => setActiveTab('gallery')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-              activeTab === 'gallery'
-                ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg'
-                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Images className="w-4 h-4" />
-            <span>∆gallery Subobject Media ({selectedObject.deltaGallery?.items.length || 0})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('chat')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-              activeTab === 'chat'
-                ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg'
-                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            <span>Chat Dispatch (Audio/Video Support)</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('metrics')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-              activeTab === 'metrics'
-                ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg'
-                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Activity className="w-4 h-4" />
-            <span>∆Event Metrics & Flow Traces</span>
-          </button>
-        </div>
-
-        {/* Dynamic Tab Panels */}
-        {activeTab === 'gallery' && (
-          <DeltaGalleryView
-            gallery={selectedObject.deltaGallery}
-            ownerName={selectedObject.connectorAddress || selectedObject.name}
-            ownerKind={selectedObject.kind}
-            onAddItem={handleAddMediaToGallery}
+        {currentPath === '/connect' ? (
+          <ConnectionStringManager
+            onSelectConnectionString={(connStr) => {
+              // Option to prefill new connector form or navigate
+              setNewConnectorAddress(connStr);
+              setShowAddModal(true);
+              navigateTo('/');
+            }}
           />
-        )}
-
-        {activeTab === 'chat' && (
-          <ChatView
-            messages={chatMessages}
-            channelName={selectedObject.connectorAddress || selectedObject.name}
-            onSendMessage={handleSendChatMessage}
-          />
-        )}
-
-        {activeTab === 'metrics' && (
-          <div className="space-y-6">
-            <DeltaStatsView
-              currentStats={latestDelta}
-              history={selectedObjectDeltas}
-              objectName={selectedObject.name}
+        ) : (
+          <>
+            {/* Addressable Object Selector Grid */}
+            <ObjectSelector
+              objects={objects}
+              selectedObjectId={selectedObjectId}
+              onSelectObject={setSelectedObjectId}
+              onAddNewObject={() => setShowAddModal(true)}
             />
-            <FlowTraceView flows={selectedObjectFlows} />
-          </div>
+
+            {/* Selected Object Active Controls & Summary Header */}
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <div className="flex items-center space-x-2 mb-1 flex-wrap gap-y-1">
+                  <span className="text-xs font-mono text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800">
+                    {selectedObject.protocol}
+                  </span>
+                  <span className="text-xs font-mono text-cyan-300 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800 capitalize">
+                    {selectedObject.kind.replace('_', ' ')}
+                  </span>
+                  {selectedObject.connectorAddress && (
+                    <span className="text-xs font-mono text-purple-300 bg-purple-950 px-2 py-0.5 rounded border border-purple-800 flex items-center space-x-1">
+                      <Share2 className="w-3 h-3 text-purple-400" />
+                      <span>{selectedObject.connectorAddress}</span>
+                    </span>
+                  )}
+                  <h2 className="text-xl font-bold text-slate-100">{selectedObject.name}</h2>
+                  <span className="text-xs text-slate-500 font-mono">({selectedObject.id})</span>
+                </div>
+                <p className="text-xs text-slate-400 max-w-2xl">
+                  Servlet Class: <span className="text-slate-300 font-mono">{selectedObject.servletClass}</span> | Endpoint Path:{' '}
+                  <span className="text-slate-300 font-mono">{selectedObject.endpointPath}</span>
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handleTriggerIVCCall(selectedObject)}
+                  className="flex items-center space-x-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow transition-all cursor-pointer"
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Fire IVC Call</span>
+                </button>
+                <button
+                  onClick={() => handleBatchIVCLoad(5)}
+                  className="flex items-center space-x-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Burst (5x)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* View Switcher Tabs */}
+            <div className="flex space-x-3 border-b border-slate-800 pb-3">
+              <button
+                onClick={() => setActiveTab('gallery')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                  activeTab === 'gallery'
+                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Images className="w-4 h-4" />
+                <span>∆gallery Subobject Media ({selectedObject.deltaGallery?.items.length || 0})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('chat')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                  activeTab === 'chat'
+                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>Chat Dispatch (Audio/Video Support)</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('metrics')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                  activeTab === 'metrics'
+                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Activity className="w-4 h-4" />
+                <span>∆Event Metrics & Flow Traces</span>
+              </button>
+            </div>
+
+            {/* Dynamic Tab Panels */}
+            {activeTab === 'gallery' && (
+              <DeltaGalleryView
+                gallery={selectedObject.deltaGallery}
+                ownerName={selectedObject.connectorAddress || selectedObject.name}
+                ownerKind={selectedObject.kind}
+                onAddItem={handleAddMediaToGallery}
+              />
+            )}
+
+            {activeTab === 'chat' && (
+              <ChatView
+                messages={chatMessages}
+                channelName={selectedObject.connectorAddress || selectedObject.name}
+                onSendMessage={handleSendChatMessage}
+              />
+            )}
+
+            {activeTab === 'metrics' && (
+              <div className="space-y-6">
+                <DeltaStatsView
+                  currentStats={latestDelta}
+                  history={selectedObjectDeltas}
+                  objectName={selectedObject.name}
+                />
+                <FlowTraceView flows={selectedObjectFlows} />
+              </div>
+            )}
+          </>
         )}
       </main>
 
@@ -455,7 +518,7 @@ export default function App() {
               {newObjKind === 'social_connector' && (
                 <div>
                   <label className="block text-slate-400 mb-1">
-                    Connector Address (e.g. +phonenumber@whatsapp.net)
+                    Connector Address (e.g. +phonenumber@whatsapp.net or user@email.host/service.social or $me)
                   </label>
                   <input
                     type="text"
