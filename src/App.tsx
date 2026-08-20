@@ -380,6 +380,25 @@ export default function App() {
                   Servlet Class: <span className="text-slate-300 font-mono">{selectedObject.servletClass}</span> | Endpoint Path:{' '}
                   <span className="text-slate-300 font-mono">{selectedObject.endpointPath}</span>
                 </p>
+                {selectedObject.modes && selectedObject.modes.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {selectedObject.modes.map((mode) => (
+                      <div
+                        key={mode.id}
+                        className="flex items-center space-x-1 text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700 cursor-help"
+                        title={JSON.stringify(mode.metadata, null, 2)}
+                      >
+                        <span className="text-emerald-400 font-bold">{mode.name}</span>
+                        {mode.subparam && (
+                          <>
+                            <span className="text-slate-500">?</span>
+                            <span className="text-amber-300">{mode.subparam}</span>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center space-x-2">
