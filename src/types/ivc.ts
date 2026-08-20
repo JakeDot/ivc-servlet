@@ -15,6 +15,13 @@ export interface MediaAttachment {
   createdAt: number;
 }
 
+export interface ObjectMode {
+  id: string;
+  name: string;      // e.g., '§created', '§modified', '∆owner', '+mode'
+  subparam?: string; // e.g., 'subparam-z[eus]'
+  metadata: Record<string, any>;
+}
+
 export interface DeltaGallery {
   id: string;
   ownerId: string;
@@ -50,6 +57,7 @@ export interface AddressableObject {
   description: string;
   attributes: Record<string, string | number>;
   deltaGallery?: DeltaGallery;
+  modes?: ObjectMode[];
 }
 
 export interface IVCServiceCall {

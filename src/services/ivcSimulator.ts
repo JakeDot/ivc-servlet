@@ -21,6 +21,10 @@ export const INITIAL_ADDRESSABLE_OBJECTS: AddressableObject[] = [
     status: 'ACTIVE',
     description: 'WhatsApp social media connector for outbound media messages & voice notes.',
     attributes: { network: 'WhatsApp', phone: '+15550199283', enc: 'E2EE' },
+    modes: [
+      { id: 'mode-1', name: '§created', metadata: { by: 'admin', timestamp: Date.now() - 10000000 } },
+      { id: 'mode-2', name: '∆owner', subparam: 'sysadmin-group', metadata: { level: 'tier-1' } }
+    ],
     deltaGallery: {
       id: 'gal-wa-01',
       ownerId: 'obj-whatsapp-connector-01',
@@ -158,6 +162,9 @@ export const INITIAL_ADDRESSABLE_OBJECTS: AddressableObject[] = [
     status: 'ACTIVE',
     description: 'Lead Site Reliability Engineer profile & addressable user endpoint.',
     attributes: { role: 'Cluster Admin', level: 5, statusMessage: 'Monitoring IVC Deltas' },
+    modes: [
+      { id: 'mode-3', name: '§modified', subparam: 'permissions', metadata: { by: 'root', changes: ['granted_sudo'] } }
+    ],
     deltaGallery: {
       id: 'gal-user-sysadmin',
       ownerId: 'obj-user-sysadmin',
