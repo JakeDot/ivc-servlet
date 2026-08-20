@@ -1,6 +1,7 @@
 import React from 'react';
 import { AddressableObject } from '../types/ivc';
-import { Server, User, Hash, Cpu, AlertCircle, CheckCircle, Plus, Images, Share2 } from 'lucide-react';
+import { parseConnectionString } from '../services/connectionStringParser';
+import { Server, User, Hash, Cpu, AlertCircle, CheckCircle, Plus, Images, Share2, Compass, PieChart } from 'lucide-react';
 
 interface ObjectSelectorProps {
   objects: AddressableObject[];
@@ -21,7 +22,7 @@ export const ObjectSelector: React.FC<ObjectSelectorProps> = ({
         return (
           <span className="text-[10px] font-mono bg-purple-950 text-purple-300 border border-purple-800/80 px-2 py-0.5 rounded flex items-center space-x-1">
             <Share2 className="w-2.5 h-2.5 text-purple-400" />
-            <span>Social: {connectorAddress || 'Connector'}</span>
+            <span className="truncate max-w-[120px]">Social: {connectorAddress || 'Connector'}</span>
           </span>
         );
       case 'channel':
@@ -63,7 +64,7 @@ export const ObjectSelector: React.FC<ObjectSelectorProps> = ({
         <div className="flex items-center space-x-2">
           <Server className="w-5 h-5 text-indigo-400" />
           <h2 className="text-lg font-semibold tracking-wide">
-            Addressable Objects, Social Connectors & ∆galleries
+            Addressable Objects, Fractional Subobjects (/3,/7/8/9°180) & ∆galleries
           </h2>
         </div>
         <button
@@ -79,6 +80,7 @@ export const ObjectSelector: React.FC<ObjectSelectorProps> = ({
         {objects.map((obj) => {
           const isSelected = obj.id === selectedObjectId;
           const mediaCount = obj.deltaGallery?.items.length || 0;
+          const parsedAddress = obj.connectorAddress ? parseConnectionString(obj.connectorAddress) : null;
 
           return (
             <div
@@ -114,12 +116,30 @@ export const ObjectSelector: React.FC<ObjectSelectorProps> = ({
                 </span>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-slate-400 mb-2.5">
+              <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
                 <div className="truncate max-w-[150px]">
                   <span className="text-slate-500">Servlet:</span> {obj.servletName}
                 </div>
                 {getKindBadge(obj.kind, obj.connectorAddress)}
               </div>
+
+              {/* Subobject & Degree modifier indicators */}
+              {parsedAddress && (parsedAddress.fractionalSubobject || parsedAddress.degreeModifier !== undefined) && (
+                <div className="flex items-center space-x-2 mb-2">
+                  {parsedAddress.fractionalSubobject && (
+                    <span className="inline-flex items-center space-x-1 text-[10px] font-mono bg-pink-950 text-pink-300 border border-pink-800/80 px-1.5 py-0.5 rounded">
+                      <PieChart className="w-2.5 h-2.5 text-pink-400" />
+                      <span>{parsedAddress.fractionalSubobject}</span>
+                    </span>
+                  )}
+                  {parsedAddress.degreeModifier !== undefined && (
+                    <span className="inline-flex items-center space-x-1 text-[10px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-800/80 px-1.5 py-0.5 rounded">
+                      <Compass className="w-2.5 h-2.5 text-cyan-400" />
+                      <span>°{parsedAddress.degreeModifier}</span>
+                    </span>
+                  )}
+                </div>
+              )}
 
               <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800/80">
                 <span className="font-mono bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 text-indigo-300">
