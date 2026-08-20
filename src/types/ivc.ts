@@ -1,8 +1,47 @@
 export type IVCProtocol = 'IVC-gRPC' | 'IVC-HTTPS' | 'IVC-RMI' | 'IVC-REST';
 
+export type ObjectKind = 'social_connector' | 'channel' | 'user' | 'server' | 'servlet';
+
+export interface MediaAttachment {
+  id: string;
+  type: 'audio' | 'video' | 'image';
+  title: string;
+  url: string;
+  thumbnailUrl?: string;
+  durationSeconds?: number;
+  sizeBytes?: number;
+  mimeType?: string;
+  description?: string;
+  createdAt: number;
+}
+
+export interface DeltaGallery {
+  id: string;
+  ownerId: string;
+  ownerName: string;
+  ownerKind: ObjectKind;
+  title: string;
+  description?: string;
+  items: MediaAttachment[];
+  updatedAt: number;
+}
+
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar?: string;
+  channelId: string;
+  content: string;
+  attachments?: MediaAttachment[];
+  timestamp: number;
+}
+
 export interface AddressableObject {
   id: string;
   name: string;
+  kind: ObjectKind;
+  connectorAddress?: string; // e.g. +15550199283@whatsapp.net or @IVC_Alerts_Bot
   servletName: string;
   servletClass: string;
   endpointPath: string;
@@ -10,6 +49,7 @@ export interface AddressableObject {
   status: 'ACTIVE' | 'DEGRADED' | 'INACTIVE';
   description: string;
   attributes: Record<string, string | number>;
+  deltaGallery?: DeltaGallery;
 }
 
 export interface IVCServiceCall {
