@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { FlowInfo, FlowStep } from '../types/ivc';
 import {
   GitCommit,
-  CheckCircle2,
-  XCircle,
   Clock,
   ChevronRight,
   Database,
