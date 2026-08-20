@@ -5,7 +5,6 @@ import {
   FlowStep,
   IVCServiceCall,
   ChatMessage,
-  MediaAttachment,
 } from '../types/ivc';
 
 export const INITIAL_ADDRESSABLE_OBJECTS: AddressableObject[] = [
