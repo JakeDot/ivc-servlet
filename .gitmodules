@@ -1,0 +1,9 @@
+[submodule "ivc-android"]
+	path = ivc-android
+	url = https://github.com/JakeDot/ivc-android.git
+[submodule "ivc.cx-m"]
+	path = ivc.cx-m
+	url = https://github.com/JakeDot/ivc.cx-m.git
+[submodule "ivc.cx-modes"]
+	path = ivc.cx-modes
+	url = https://github.com/JakeDot/ivc.cx-modes.git
