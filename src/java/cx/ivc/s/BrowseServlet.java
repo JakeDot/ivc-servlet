@@ -3,6 +3,10 @@
  */
 package cx.ivc.s;
 
+import cx.ivc.IvcUri;
+import cx.ivc.Delta;
+
+
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,7 +59,7 @@ public class BrowseServlet extends HttpServlet implements cx.ivc.IvcServlet {
         return "browse";
     }
 
-    boolean handles(IvcUri uri) {
+    public boolean handles(IvcUri uri) {
         return true; // can handle any ivc:// URI
     }
     
@@ -407,4 +411,33 @@ public class BrowseServlet extends HttpServlet implements cx.ivc.IvcServlet {
 
     private String firstGroup(Pattern p, String s) {
         Matcher m = p.matcher(s);
-        return m.find() ? m.group(1
+        return m.find() ? m.group(1) : null;
+    }
+
+    private String extractField(String payload, String field) {
+        Pattern p = Pattern.compile("\"" + field + "\"\\s*:\\s*\"([^\"]+)\"");
+        return firstGroup(p, payload);
+    }
+
+    private void send(HttpServletRequest req, HttpServletResponse resp, int code, String contentType, String body, cx.ivc.IvcUri ivc) throws IOException {
+        resp.setStatus(code);
+        resp.setContentType(contentType);
+        PrintWriter w = resp.getWriter();
+        w.write(body);
+        w.flush();
+    }
+
+    private boolean isChannel(char prefix) {
+        return prefix == '#' || prefix == '&';
+    }
+
+    private String json(String s) {
+        if (s == null) return "null";
+        return s.replace("\"", "\\\"");
+    }
+
+    private boolean containsField(String json, String field, String value) {
+        String extracted = extractField(json, field);
+        return value.equals(extracted);
+    }
+}
