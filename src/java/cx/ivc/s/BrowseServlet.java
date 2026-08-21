@@ -49,8 +49,11 @@ import java.util.regex.Pattern;
  *   Status: <httpstatus>+modes:<appstatus>
  */
 @WebServlet("/api/*")
-public class BrowseServlet extends HttpServlet {
+public class BrowseServlet extends HttpServlet implements cx.ivc.IvcServlet {
 
+    public String name() {
+        return IvcServlet.URI_PREFIX + "browse";
+    }
     /* ---------- config ---------- */
 
     private static final String STRIPE_WEBHOOK_SECRET =
