@@ -54,6 +54,11 @@ public class BrowseServlet extends HttpServlet implements cx.ivc.IvcServlet {
     public String name() {
         return "browse";
     }
+
+    boolean handles(IvcUri uri) {
+        return true; // can handle any ivc:// URI
+    }
+    
     /* ---------- config ---------- */
 
     private static final String STRIPE_WEBHOOK_SECRET =
