@@ -1,7 +1,13 @@
 package cx.ivc;
 
 public interface IvcServlet {
+    String URI_PREFIX = "ivc+https://s.ivc.cx/";
+    
     String name();
+
+    default String uri() {
+        return URI_PREFIX + name();
+    }
 
     /** Does this servlet handle the ivc:// object? (prefix + object + modes) */
     boolean handles(IvcUri uri);
