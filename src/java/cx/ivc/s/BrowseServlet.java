@@ -52,7 +52,7 @@ import java.util.regex.Pattern;
 public class BrowseServlet extends HttpServlet implements cx.ivc.IvcServlet {
 
     public String name() {
-        return IvcServlet.URI_PREFIX + "browse";
+        return "browse";
     }
     /* ---------- config ---------- */
 
