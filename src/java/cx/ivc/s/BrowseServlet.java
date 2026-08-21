@@ -30,7 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * cx.ivc.ai.EndpointServlet — IVC gateway over HTTPS (PROTOCOL.md + Deltas).
+ * cx.ivc.s.BrowseServlet — IVC gateway over HTTPS (PROTOCOL.md + Deltas).
  *
  * IVC "object∆data" stream: a log of ∆event objects:
  *   { "type": string, "timestamp": integer (unix epoch),
@@ -49,7 +49,7 @@ import java.util.regex.Pattern;
  *   Status: <httpstatus>+modes:<appstatus>
  */
 @WebServlet("/api/*")
-public class EndpointServlet extends HttpServlet {
+public class BrowseServlet extends HttpServlet {
 
     /* ---------- config ---------- */
 
