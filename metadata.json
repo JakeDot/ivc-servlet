@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "IVC Servlet Dashboard",
+  "description": "Interactive servlet management and telemetry dashboard for IVC protocol endpoints, delta statistics, media galleries, and connection strings.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -9,6 +9,7 @@ import {
   MediaAttachment,
   ObjectKind,
 } from './types/ivc';
+import { ServletDefinition } from './types/servlet';
 import {
   INITIAL_ADDRESSABLE_OBJECTS,
   INITIAL_CHAT_MESSAGES,
@@ -22,6 +23,7 @@ import { FlowTraceView } from './components/FlowTraceView';
 import { DeltaGalleryView } from './components/DeltaGalleryView';
 import { ChatView } from './components/ChatView';
 import { ConnectionStringManager } from './components/ConnectionStringManager';
+import { ServletManager } from './components/ServletManager';
 import {
   Radio,
   Play,
@@ -35,13 +37,17 @@ import {
   Share2,
   Link2,
   LayoutDashboard,
+  Cpu,
 } from 'lucide-react';
 
 export default function App() {
   // Routing state based on window.location.pathname
-  const [currentPath, setCurrentPath] = useState<string>(
-    window.location.pathname === '/connect' ? '/connect' : '/'
-  );
+  const [currentPath, setCurrentPath] = useState<string>(() => {
+    const path = window.location.pathname;
+    if (path === '/connect') return '/connect';
+    if (path === '/servlets') return '/servlets';
+    return '/';
+  });
 
   const [objects, setObjects] = useState<AddressableObject[]>(INITIAL_ADDRESSABLE_OBJECTS);
   const [selectedObjectId, setSelectedObjectId] = useState<string>(INITIAL_ADDRESSABLE_OBJECTS[0].id);
@@ -64,14 +70,17 @@ export default function App() {
   const [newObjKind, setNewObjKind] = useState<ObjectKind>('social_connector');
   const [newConnectorAddress, setNewConnectorAddress] = useState('+15550199283@whatsapp.net');
   const [newServletName, setNewServletName] = useState('WhatsAppConnectorServlet');
-  const [newServletClass, setNewServletClass] = useState('com.enterprise.ivc.servlets.WhatsAppBridgeServlet');
+  const [newServletClass, setNewServletClass] = useState('cx.ivc.servlets.WhatsAppBridgeServlet');
   const [newEndpointPath, setNewEndpointPath] = useState('/ivc/v1/social/whatsapp');
   const [newProtocol, setNewProtocol] = useState<IVCProtocol>('IVC-REST');
 
   // Handle URL history popstate changes
   useEffect(() => {
     const handlePopState = () => {
-      setCurrentPath(window.location.pathname === '/connect' ? '/connect' : '/');
+      const path = window.location.pathname;
+      if (path === '/connect') setCurrentPath('/connect');
+      else if (path === '/servlets') setCurrentPath('/servlets');
+      else setCurrentPath('/');
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -80,6 +89,40 @@ export default function App() {
   const navigateTo = (path: string) => {
     window.history.pushState({}, '', path);
     setCurrentPath(path);
+  };
+
+  const handleServletDeployed = (servlet: ServletDefinition) => {
+    // Also create a linked AddressableObject if it doesn't exist
+    const newObjId = `obj-${servlet.id}`;
+    const newObj: AddressableObject = {
+      id: newObjId,
+      name: servlet.name,
+      kind: servlet.category === 'social_connector' ? 'social_connector' : 'servlet',
+      connectorAddress: servlet.initParams?.connectorAddress || undefined,
+      servletName: servlet.name,
+      servletClass: servlet.className,
+      endpointPath: servlet.urlPatterns[0] || `/ivc/v1/${servlet.name.toLowerCase()}`,
+      protocol: servlet.protocol,
+      status: 'ACTIVE',
+      description: servlet.description,
+      attributes: {
+        category: servlet.category,
+        deployedFromEngine: 'true',
+        loadOnStartup: servlet.loadOnStartup,
+      },
+      deltaGallery: {
+        id: `gal-${newObjId}`,
+        ownerId: newObjId,
+        ownerName: servlet.name,
+        ownerKind: servlet.category === 'social_connector' ? 'social_connector' : 'servlet',
+        title: `∆gallery - ${servlet.name}`,
+        description: `Subobject gallery for ${servlet.name}`,
+        updatedAt: Date.now(),
+        items: [],
+      },
+    };
+
+    setObjects((prev) => [...prev, newObj]);
   };
 
   const selectedObject = useMemo(
@@ -225,7 +268,7 @@ export default function App() {
       kind: newObjKind,
       connectorAddress: newObjKind === 'social_connector' ? newConnectorAddress : undefined,
       servletName: newServletName,
-      servletClass: newServletClass || `com.enterprise.ivc.servlets.${newServletName}`,
+      servletClass: newServletClass || `cx.ivc.servlets.${newServletName}`,
       endpointPath: newEndpointPath || `/ivc/v1/${newObjName.toLowerCase()}`,
       protocol: newProtocol,
       status: 'ACTIVE',
@@ -307,6 +350,18 @@ export default function App() {
               </button>
 
               <button
+                onClick={() => navigateTo('/servlets')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  currentPath === '/servlets'
+                    ? 'bg-indigo-600 text-white shadow'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Servlet Engine</span>
+              </button>
+
+              <button
                 onClick={() => navigateTo('/connect')}
                 className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   currentPath === '/connect'
@@ -347,6 +402,14 @@ export default function App() {
               navigateTo('/');
             }}
           />
+        ) : currentPath === '/servlets' ? (
+          <ServletManager
+            onNavigateToConnect={(connStr) => {
+              if (connStr) setNewConnectorAddress(connStr);
+              navigateTo('/connect');
+            }}
+            onServletDeployed={handleServletDeployed}
+          />
         ) : (
           <>
             {/* Addressable Object Selector Grid */}
@@ -376,9 +439,20 @@ export default function App() {
                   <h2 className="text-xl font-bold text-slate-100">{selectedObject.name}</h2>
                   <span className="text-xs text-slate-500 font-mono">({selectedObject.id})</span>
                 </div>
-                <p className="text-xs text-slate-400 max-w-2xl">
-                  Servlet Class: <span className="text-slate-300 font-mono">{selectedObject.servletClass}</span> | Endpoint Path:{' '}
-                  <span className="text-slate-300 font-mono">{selectedObject.endpointPath}</span>
+                <p className="text-xs text-slate-400 max-w-2xl flex items-center flex-wrap gap-x-2">
+                  <span>
+                    Servlet Class: <span className="text-slate-300 font-mono">{selectedObject.servletClass}</span>
+                  </span>
+                  <span>|</span>
+                  <span>
+                    Endpoint Path: <span className="text-slate-300 font-mono">{selectedObject.endpointPath}</span>
+                  </span>
+                  <button
+                    onClick={() => navigateTo('/servlets')}
+                    className="text-[11px] text-indigo-400 hover:text-indigo-300 underline font-semibold cursor-pointer ml-1 inline-flex items-center space-x-1"
+                  >
+                    <span>Manage in Servlet Engine &rarr;</span>
+                  </button>
                 </p>
                 {selectedObject.modes && selectedObject.modes.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
@@ -566,7 +640,7 @@ export default function App() {
                 <label className="block text-slate-400 mb-1">Servlet Class Path</label>
                 <input
                   type="text"
-                  placeholder="e.g. com.enterprise.ivc.servlets.WhatsAppBridgeServlet"
+                  placeholder="e.g. cx.ivc.servlets.WhatsAppBridgeServlet"
                   value={newServletClass}
                   onChange={(e) => setNewServletClass(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
