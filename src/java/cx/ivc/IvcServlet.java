@@ -2,13 +2,10 @@ package cx.ivc;
 
 public interface IvcServlet {
     
-    String URI_PREFIX = "ivc+https://s.ivc.cx/";
-    
+    /**
+     * Stable name used to identify this servlet.
+     */
     String name();
-
-    default String uri() {
-        return URI_PREFIX + name();
-    }
 
     /**
      * Does this servlet handle the ivc:// object?
@@ -39,6 +36,5 @@ public interface IvcServlet {
         throw new UnsupportedOperationException(
             "Servlet '" + name() + "' does not support service requests"
         );
-    
     }
 }
