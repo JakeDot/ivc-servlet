@@ -10,28 +10,22 @@ public interface IvcServlet {
     /**
      * Does this servlet handle the ivc:// object?
      *
-     * The default is false so implementations must explicitly opt in to
-     * handling URI objects.
+     * @param uri URI structure to match against.
+     * @return true if it handles this URI, false otherwise
      */
-    default boolean handles(IvcUri uri) {
-        return false;
-    }
+    boolean handles(IvcUri uri);
 
     /**
-     * Consume a delta from the object's data stream
-     * (chat, memo, signaling, and so on).
-     *
-     * The default implementation ignores deltas.
+     * Dispatched when an IVC delta is matched to this servlet via handled URIs.
+     * 
+     * @param d The delta object being processed.
      */
-    default void onDelta(Delta delta) {
-        // This servlet does not consume deltas.
+    default void onDelta(Delta d) {
+        throw new UnsupportedOperationException(
+            "Servlet '" + name() + "' does not support deltas"
+        );
     }
-
-    /**
-     * Full request dispatch for custom endpoints (GET/POST/PUT).
-     *
-     * Implementations that expose custom endpoints must override this method.
-     */
+    
     default IvcResponse service(IvcRequest request) {
         throw new UnsupportedOperationException(
             "Servlet '" + name() + "' does not support service requests"
